@@ -19,7 +19,8 @@ public class ProxyServer {
         ServerSocket proxyServer = new ServerSocket(PORT);
         
         while(listening) {
-            new ProxyServerThread(proxyServer.accept()).start();
+            ProxyServerThread t1 = new ProxyServerThread(proxyServer.accept());
+            t1.run();
         }
         
     }

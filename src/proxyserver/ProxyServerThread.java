@@ -6,15 +6,15 @@ package proxyserver;
 
 import java.io.IOException;
 import java.net.*;
-import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 /**
  *
  * @author pal25
  */
-public class ProxyServerThread {
+public class ProxyServerThread implements Runnable {
 
     private Connection client;
     private Connection server;
@@ -23,26 +23,8 @@ public class ProxyServerThread {
         client = new Connection(socket);
     }
 
+    @Override
     public void run() {
-        try {
-            client.getData();
-            String input = client.readData();
-            System.out.println(input);
-
-            System.out.println("geting inet addr");
-            server = new Connection(new Socket("129.22.170.87", 80));
-
-            System.out.println("writing...");
-            server.write(client.readData(), client.inputLength);
-            server.flush();
-            server.getData();
-            System.out.println(server.readData());
-
-            client.closeConnection();
-            server.closeConnection();
-
-        } catch (IOException ex) {
-            Logger.getLogger(ProxyServerThread.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        //TODO   
     }
 }

@@ -2,6 +2,8 @@ package proxyserver;
 
 import java.io.IOException;
 import java.net.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  *
@@ -16,11 +18,12 @@ public class ProxyServer {
      */
     public static void main(String[] args) throws IOException {
         boolean listening = true;
+        ExecutorService pool = Executors.newFixedThreadPool(50);
         ServerSocket proxyServer = new ServerSocket(PORT);
         
         while(listening) {
-            ProxyServerThread t1 = new ProxyServerThread(proxyServer.accept());
-            t1.run();
+            Socket connectionSocket = proxyServer.accept();
+            pool.execute(new ProxyServerThread(connectionSocket));
         }
         
     }

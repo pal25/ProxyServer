@@ -1,11 +1,12 @@
 package proxyserver;
 
-import com.google.common.base.Splitter;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.StringReader;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  *
@@ -13,81 +14,56 @@ import java.util.Iterator;
  */
 public class Request {
 
-    public enum request_method {
+    public HashMap<String, String> headers;
+    public String host;
 
-        HEAD,
-        GET,
-        POST,
-        PUT,
-        DELETE,
-        TRACE,
-        OPTIONS,
-        CONNECT,
-        PATCH,
-        UNKNOWN
-    }
-    private request_method method;
-    private String resource;
-    private String httpVersion;
-    private String host;
-    private HashMap<String, String> headers;
+    public Request(InputStream input) throws IOException {
+        List<String> lines = readLines(input);
 
-    public Request() {
-    }
-
-    public Request(String req_text) throws IOException {
-        BufferedReader reader = new BufferedReader(new StringReader(req_text));
-
-        String line = reader.readLine();
-        Iterator iter = Splitter.on(" ").split(line).iterator(); //Split string and iterate over the values
-        this.method = _parseMethod((String) iter.next());
-        this.resource = (String) iter.next();
-        this.httpVersion = (String) iter.next();
-
-        this.host = _parseRequestHost(reader.readLine());
-
-        headers = new HashMap<>();
-        while ((line = reader.readLine()) != null) {
-            iter = Splitter.on(": ").split(line).iterator();
-            String key = (String) iter.next();
-            String value = (String) iter.next();
-            this.headers.put(key, value);
-        }
-    }
-
-    private request_method _parseMethod(String req_method) {
-        switch (req_method.toUpperCase()) {
-            case "HEAD":
-                return request_method.HEAD;
-            case "GET":
-                return request_method.GET;
-            case "POST":
-                return request_method.POST;
-            case "PUT":
-                return request_method.PUT;
-            case "DELETE":
-                return request_method.DELETE;
-            case "TRACE":
-                return request_method.TRACE;
-            case "OPTIONS":
-                return request_method.OPTIONS;
-            case "CONNECT":
-                return request_method.CONNECT;
-            case "PATCH":
-                return request_method.PATCH;
-            default:
-                return request_method.UNKNOWN;
-
-        }
-    }
-
-    private String _parseRequestHost(String req_text) {
-        System.out.println(req_text);
-        Iterator iter = Splitter.on(": ").split(req_text).iterator();
-        if ("Host".compareTo((String) iter.next()) == 0) {
-            return (String) iter.next();
+        Iterator iter = lines.iterator();
+        if (iter.hasNext() == false) {
+            throw new IOException("No Request Received");
         }
 
-        return "prod-snscholar.case.edu";
+        for (String line : lines) {
+            headers.putAll(parseLine(line));
+        }
+        
+        host = headers.get("Host");
     }
+
+    private List<String> readLines(InputStream input) throws IOException {
+        byte[] value = new byte[1]; //Allocate buffer to read values from InputStream
+
+        List<String> lines = new LinkedList<>();
+        StringBuilder str = new StringBuilder();
+
+        while (true) {
+            str.setLength(0);
+            while (input.read(value) != -1) {
+                if (value[0] == '\r') {
+                    break;
+                }
+                str.append(value[0]);
+            }
+            input.read(value); //Read extra \n on each line
+            if (str.length() == 0) {
+                break;
+            }
+            lines.add(str.toString());
+        }
+        return lines;
+    }
+
+    private HashMap<String, String> parseLine(String line) {
+        String[] splitValues;
+        splitValues = StringUtils.split(line, ": ", 2);
+        
+        HashMap<String, String> temp = new HashMap<>(); //Hack-y version of tuple
+        temp.put(splitValues[0], splitValues[1]);
+
+        return temp;
+
+    }
+    
 }

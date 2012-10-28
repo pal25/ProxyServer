@@ -8,7 +8,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-
 /**
  *
  * @author pal25
@@ -82,16 +81,16 @@ public class Request {
     public String rebuildRequest() {
         StringBuilder out = new StringBuilder();
         out.append(requestType).append(" ").append(requestURI).append(" ").append(requestVersion);
-        out.append("\n");
-        
-        for (Map.Entry<String, String> entry: headers.entrySet()) {
+        out.append("\r\n");
+
+        for (Map.Entry<String, String> entry : headers.entrySet()) {
             out.append(entry.getKey());
             out.append(": ");
             out.append(entry.getValue());
-            out.append("\n");
+            out.append("\r\n");
         }
         out.append("\n"); //To note end of request
-        
+
         return out.toString();
     }
 
@@ -113,5 +112,13 @@ public class Request {
 
     public String getRequestVersion() {
         return requestVersion;
+    }
+
+    public String getHeaderField(String key) {
+        if (headers.get(key) != null) {
+            return headers.get(key);
+        } else {
+            return "";
+        }
     }
 }

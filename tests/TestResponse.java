@@ -24,7 +24,7 @@ public class TestResponse {
    @Before 
    public void setUp() throws FileNotFoundException, IOException {
        InputStream fakeStream = new FileInputStream("C:\\Users\\pal25\\Desktop\\ProxyServer\\tests\\FakeResponse.txt");
-       InputStream fakeChunkStream = new FileInputStream("C:\\Users\\pal25\\Desktop\\ProxyServer\\tests\\FakeResponse.txt");
+       InputStream fakeChunkStream = new FileInputStream("C:\\Users\\pal25\\Desktop\\ProxyServer\\tests\\FakeChunkResponse.txt");
        testResponse = new Response(fakeStream);
        testChunkResponse = new Response(fakeChunkStream);
    } 
@@ -45,27 +45,17 @@ public class TestResponse {
    }
    
    @Test
-   public void test_getContent() {
-       assertTrue(testResponse.getContent().equals("<html>Test!</html>"));
-   }
-   
-   @Test
    public void test_getChunkResponseText() {
-       assertTrue(testResponse.getResponseText().equals("OK"));
+       assertTrue(testChunkResponse.getResponseText().equals("OK"));
    }
    
    @Test
    public void test_getChunkResponseStatus() {
-       assertTrue(testResponse.getResponseStatus().equals("200"));
+       assertTrue(testChunkResponse.getResponseStatus().equals("200"));
    }
    
    @Test
    public void test_getChunkResponseVersion() {
-       assertTrue(testResponse.getResponseVersion().equals("HTTP/1.1"));
-   }
-   
-   @Test
-   public void test_getChunkContent() {
-       assertTrue(testResponse.getContent().equals("<html>Test!</html>"));
+       assertTrue(testChunkResponse.getResponseVersion().equals("HTTP/1.1"));
    }
 }

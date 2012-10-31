@@ -19,10 +19,11 @@ public class Response {
     private String responseText;
     private String responseStatus;
     private String responseVersion;
-    private String content;
+    private InputStream input;
 
     public Response(InputStream input) throws IOException {
-        List<String> lines = readHeaderLines(input);
+        this.input = input;
+        List<String> lines = readHeaderLines();
 
         Iterator iter = lines.iterator();
         if (iter.hasNext() == false) {
@@ -40,72 +41,9 @@ public class Response {
         for (String line : lines) {
             headers.putAll(parseHeaderLine(line));
         }
-
-        if (headers.get("Content-Length") != null) {
-            content = readContent(input, Integer.parseInt(headers.get("Content-Length"), 10));
-        } else {
-            content = readChunkedContent(input);
-        }
     }
 
-    private String readChunkedContent(InputStream input) throws IOException {
-        List<String> dataList = new LinkedList<>();
-        StringBuilder str = new StringBuilder();
-        int chunkSize;
-        int state = 0;
-        
-        while (true) {
-            switch (state) {
-                case (0): // Reading chunk size
-                    byte[] chunkSizeValue = new byte[1];
-                    str.setLength(0);
-                    while (input.read(chunkSizeValue) != -1) {
-                        if (chunkSizeValue[0] == '\r') {
-                            break;
-                        }
-                        str.append((new Integer(Integer.parseInt(new String(chunkSizeValue), 16))).toString());
-                    }
-                    input.read(chunkSizeValue); //Read extra \n on each line
-                    
-                    dataList.add(str.toString());
-                    chunkSize = Integer.parseInt(str.toString(), 10);
-                    if (chunkSize > 0) {
-                        state = 1;
-                    } else {
-                        state = 2;
-                    }
-                    break;
-
-                case (1): // Reading data from chunk
-                    chunkSize = Integer.parseInt(str.toString(), 10);
-                    byte[] dataValue = new byte[chunkSize];
-                    input.read(dataValue, 0, chunkSize);
-                    
-                    dataList.add(dataValue.toString());
-                    
-                    state = 0;
-                    break;
-
-                case (2): // Finalizing chunked data
-                    str.setLength(0);
-                    
-                    for (String line : dataList) {
-                        str.append(line);
-                    }
-                    
-                    return str.toString();
-            }
-        }
-    }
-
-    private String readContent(InputStream input, int contentLength) throws IOException {
-        byte[] value = new byte[contentLength];
-        input.read(value, 0, contentLength);
-
-        return new String(value);
-    }
-
-    private List<String> readHeaderLines(InputStream input) throws IOException {
+    private List<String> readHeaderLines() throws IOException {
         byte[] value = new byte[1]; //Allocate buffer to read values from InputStream
 
         List<String> lines = new LinkedList<>();
@@ -150,32 +88,31 @@ public class Response {
         return responseStatus;
     }
 
-    public String getContent() {
-        return content;
-    }
-    
-    public String rebuildResponse() throws UnsupportedEncodingException {
+    public String rebuildHeadersResponse() throws UnsupportedEncodingException {
         StringBuilder out = new StringBuilder();
         out.append(responseVersion).append(" ").append(responseStatus).append(" ").append(responseText);
         out.append("\r\n");
-        
-        for (Map.Entry<String, String> entry: headers.entrySet()) {
+
+        for (Map.Entry<String, String> entry : headers.entrySet()) {
             out.append(entry.getKey());
             out.append(": ");
             out.append(entry.getValue());
             out.append("\r\n");
         }
         out.append("\r\n"); //To note end of headers
-        out.append(content);
-        
+
         return out.toString();
     }
-    
+
     public String getHeaderField(String key) {
         if (headers.get(key) != null) {
             return headers.get(key);
         } else {
             return "";
         }
+    }
+
+    public void addHeader(String key, String value) {
+        headers.put(key, value);
     }
 }
